@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
+// function declarations
 int asciiToDecimal(uint8_t amount[]);
 void decimalToAscii(uint8_t amount, uint8_t *array);
+void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t array[]);
 
 int main() {
-	FILE *testFile = fopen("practice_project_test_file_1","rb");
+	// FILE *testFile = fopen("practice_project_test_file_1","rb");
+	FILE *testFile = fopen("outputStream","rb");
 	//FILE *testFile = fopen("practice_project_test_file_2","rb");
 	
 	// moving the pointer to the end of the file
@@ -21,6 +25,9 @@ int main() {
 	// printing filesize and temp
 	printf("Filesize: %lu\n", fileSize);
 	printf("Temp: %lu\n", temp);
+	
+	// output file
+	FILE* outputStream = fopen("outputStream","wb");
 	
 	// loop until the end of the file
 	while (temp < fileSize) {
@@ -63,6 +70,8 @@ int main() {
 					printf(",");
 			}
 			printf("\n");
+
+			// writeToType0(outputStream, type, amount, numbers);
 		}
 		
 		// Type 1
@@ -128,6 +137,7 @@ int main() {
 		temp = ftell(testFile);
 	}
 	fclose(testFile);
+	// fclose(outputStream);
 	return 0;
 }
 
@@ -156,4 +166,22 @@ void decimalToAscii(uint8_t amount, uint8_t *array) {
 		array[i] = remainder + '0';
 		i -= 1;
 	}
+}
+
+void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t* array) {
+	int unitLength = amount * 2 + 1 + 1;
+	
+	// array to store all the data of the unit
+	uint8_t unitData[unitLength];
+	// copying the first byte into unitData
+	memcpy(unitData, &type, 1);
+	// copying the second byte (amount) to unitData
+	memcpy(unitData + 1, &amount, 1);
+	// copyting the numbers array to unitData
+	memcpy(unitData + 2, array, amount * 2);
+	
+	printf("%c\n", unitData[unitLength-1]);
+	
+	// writing to a *outStream
+	fwrite(unitData, 1, unitLength, outputStream);
 }
