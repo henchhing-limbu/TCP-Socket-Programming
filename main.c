@@ -7,11 +7,13 @@
 int asciiToDecimal(uint8_t amount[]);
 void decimalToAscii(uint8_t amount, uint8_t *array);
 void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t array[]);
+void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, uint8_t* numbers);
+void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount);
 
 int main() {
 	// FILE *testFile = fopen("practice_project_test_file_1","rb");
 	FILE *testFile = fopen("outputStream","rb");
-	//FILE *testFile = fopen("practice_project_test_file_2","rb");
+	// FILE *testFile = fopen("practice_project_test_file_2","rb");
 	
 	// moving the pointer to the end of the file
 	fseek(testFile, 0, SEEK_END);
@@ -72,6 +74,7 @@ int main() {
 			printf("\n");
 
 			// writeToType0(outputStream, type, amount, numbers);
+			type0ToType1(amountArray, numbers, outputStream, amount);
 		}
 		
 		// Type 1
@@ -130,6 +133,7 @@ int main() {
 				printf("%c", numbers[i]);
 			}
 			printf("\n");
+			// writeToType1(outputStream, type, amount, count, numbers);
 		}
 		else {
 			printf("Error.\n");
@@ -137,7 +141,7 @@ int main() {
 		temp = ftell(testFile);
 	}
 	fclose(testFile);
-	// fclose(outputStream);
+	fclose(outputStream);
 	return 0;
 }
 
@@ -168,6 +172,7 @@ void decimalToAscii(uint8_t amount, uint8_t *array) {
 	}
 }
 
+// writes the type 0 unit to  an output file
 void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t* array) {
 	int unitLength = amount * 2 + 1 + 1;
 	
@@ -180,8 +185,50 @@ void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t* ar
 	// copyting the numbers array to unitData
 	memcpy(unitData + 2, array, amount * 2);
 	
-	printf("%c\n", unitData[unitLength-1]);
+	// printf("%c\n", unitData[unitLength-1]);
+	
 	
 	// writing to a *outStream
+	// fwrite(unitData, 1, unitLength, outputStream);
+}
+
+// writes the type 1 unit to an output file 
+void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, uint8_t* numbers) {
+	int unitLength = count + 1+ 3;
+	uint8_t unitData[unitLength];
+	memcpy(unitData, &type, 1);
+	memcpy(unitData + 1, amount, 3);
+	memcpy(unitData + 4, numbers, count);
 	fwrite(unitData, 1, unitLength, outputStream);
+}
+
+// translates to type1 format
+void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount) {
+	// change the first byte
+	// TODO: Assume for now these values are passed
+	uint8_t type = 1;
+	fwrite(&type, 1, 1, outputStream);
+	
+	// converting the amount 
+	// uint8_t amountArray[3];
+	// calls the function to convert the decimal amount 
+	// to ASCII characters stored in an array
+	// decimalToAscii(amount, amountArray);
+	fwrite(numbers, 1, 3, outputStream); 
+	
+	int count = 0;
+	for (int i = 0; i < amount; i++) {
+		char buffer[6];
+		uint16_t num = numbers[i];
+		char charVal = ',';
+		count = snprintf(buffer, 6, "%c,", &num);
+		// depending on the value of count add the char from buffer into file
+		fwrite(buffer, 1, count, outputStream);
+		if (i != amount-1) 
+			fwrite(&charVal, 1, 1, outputStream);
+	}
+}
+
+void type1ToType0( ) {
+	// TODO: 
 }
