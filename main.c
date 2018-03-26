@@ -237,16 +237,35 @@ void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int coun
 	// TODO: Fix this
 	// Convert to a byte/ maybe more than a byte
 	fwrite(&amount, 1, 1, outputStream);
+	int start = 0;
+	int end = 0;
 	int x = 0;
 	// writing the decimal values to the file
 	for (int i = 0; i < count; i++ ) {
-		// converting char to decimal value
-		uint8_t num[2];
-		num[x] = atoi(&numbers[i]);
-		x++;
-		if (x == 2) {
-			fwrite(num, 1, 2, outputStream);
+		// if char is ','
+		if (numbers[i] == ',') {
+			end = i;
+			// creating a sliced array 
+			// contains the chars to convert to 2 byte numbers
+			uint8_t slicedNumbers[end-start];
+			for (int j = start; j < end; j++) {
+				slicedNumbers[x] = numbers[j];
+				x++;
+			}
 			x = 0;
+			// converting char to decimal value
+			uint16_t num = atoi(slicedNumbers);
+
+			// TODO: Find better way
+			// putting num as two bytes in an array
+			uint8_t numArray[2];
+			numArray[1] = num;
+			num = num >> 8;
+			numArray[0] = num;
+			
+			// finally wrting the 2 bytes into the file
+			fwrite(numArray, 1, 2, outputStream);
+			start = end;
 		}
 	} 
 }
