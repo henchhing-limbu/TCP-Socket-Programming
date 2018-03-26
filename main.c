@@ -4,11 +4,12 @@
 #include <string.h>
 
 // function declarations
-int asciiToDecimal(uint8_t amount[]);
+uint8_t asciiToDecimal(uint8_t amount[]);
 void decimalToAscii(uint8_t amount, uint8_t *array);
 void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t array[]);
 void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, uint8_t* numbers);
 void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount);
+void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
 
 int main() {
 	// FILE *testFile = fopen("practice_project_test_file_1","rb");
@@ -35,7 +36,8 @@ int main() {
 	while (temp < fileSize) {
 		// firstByte either 0 or 1
 		uint8_t type = fgetc(testFile);
-		printf("Type %d\t", type);
+		printf("Type %d", type);
+		printf("\t");
 		
 		// Type 0
 		if (type == 0) {
@@ -68,13 +70,15 @@ int main() {
 				// 
 				uint16_t z = x | y;
 				printf("%d", z);
+			
+				// printf("%d", numbers[i]);
 				if(i != amount-1)
 					printf(",");
 			}
 			printf("\n");
 
 			// writeToType0(outputStream, type, amount, numbers);
-			type0ToType1(amountArray, numbers, outputStream, amount);
+			// type0ToType1(amountArray, numbers, outputStream, amount);
 		}
 		
 		// Type 1
@@ -82,7 +86,8 @@ int main() {
 			uint8_t amount[3];
 			// getting the value of amount
 			fread(amount, 1, 3, testFile);
-			int amountInDecimal = asciiToDecimal(amount);
+			uint8_t amountInDecimal = asciiToDecimal(amount);
+			uint8_t num = amountInDecimal;
 			
 			// print the amount 
 			printf("Amount: ");
@@ -90,9 +95,6 @@ int main() {
 				printf("%c", amount[i]);
 			}
 			printf("\t");
-			// printf(" In decimal %d ", amountInDecimal);
-			printf(" ");
-			
 			// get the position of 1 or 0
 			// to calculate the offset for fseek
 			int count = 0;
@@ -121,6 +123,7 @@ int main() {
 				}
 				count++;
 			}
+			
 			// array to store the numbers
 			uint8_t numbers[count];
 			// changing the position of the pointer
@@ -134,6 +137,7 @@ int main() {
 			}
 			printf("\n");
 			// writeToType1(outputStream, type, amount, count, numbers);
+			// type1ToType0(outputStream, num, numbers, count);
 		}
 		else {
 			printf("Error.\n");
@@ -146,8 +150,8 @@ int main() {
 }
 
 // helper function to conver ascii to decimal numbers
-int asciiToDecimal(uint8_t amount[]) {
-	int temp = atoi(amount);;
+uint8_t asciiToDecimal(uint8_t amount[]) {
+	uint8_t temp = atoi(amount);;
 	/*
 	for (int i =0; i < 2; i++) {
 		temp += amount[i] - '0';
@@ -189,7 +193,7 @@ void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t* ar
 	
 	
 	// writing to a *outStream
-	// fwrite(unitData, 1, unitLength, outputStream);
+	fwrite(unitData, 1, unitLength, outputStream);
 }
 
 // writes the type 1 unit to an output file 
@@ -209,26 +213,40 @@ void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, i
 	uint8_t type = 1;
 	fwrite(&type, 1, 1, outputStream);
 	
-	// converting the amount 
-	// uint8_t amountArray[3];
-	// calls the function to convert the decimal amount 
-	// to ASCII characters stored in an array
-	// decimalToAscii(amount, amountArray);
-	fwrite(numbers, 1, 3, outputStream); 
-	
+	fwrite(amountArray, 1, 3, outputStream); 
 	int count = 0;
+	char comma = ',';
 	for (int i = 0; i < amount; i++) {
-		char buffer[6];
-		uint16_t num = numbers[i];
-		char charVal = ',';
-		count = snprintf(buffer, 6, "%c,", &num);
+		char buffer[5];
+		int num = numbers[i];
+		count = snprintf(buffer, 5, "%d", num);
 		// depending on the value of count add the char from buffer into file
 		fwrite(buffer, 1, count, outputStream);
 		if (i != amount-1) 
-			fwrite(&charVal, 1, 1, outputStream);
+			fwrite(&comma, 1, 1, outputStream);
 	}
 }
 
-void type1ToType0( ) {
+void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count) {
 	// TODO: 
+	// changing the first byte
+	uint8_t type = 0;
+	fwrite(&type, 1, 1, outputStream);
+	
+	// writing the decimal amount to the file
+	// TODO: Fix this
+	// Convert to a byte/ maybe more than a byte
+	fwrite(&amount, 1, 1, outputStream);
+	int x = 0;
+	// writing the decimal values to the file
+	for (int i = 0; i < count; i++ ) {
+		// converting char to decimal value
+		uint8_t num[2];
+		num[x] = atoi(&numbers[i]);
+		x++;
+		if (x == 2) {
+			fwrite(num, 1, 2, outputStream);
+			x = 0;
+		}
+	} 
 }
