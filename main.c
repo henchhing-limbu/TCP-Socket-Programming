@@ -12,8 +12,8 @@ void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, i
 void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
 
 int main() {
-	// FILE *testFile = fopen("practice_project_test_file_1","rb");
-	FILE *testFile = fopen("outputStream","rb");
+	FILE *testFile = fopen("practice_project_test_file_1","rb");
+	// FILE *testFile = fopen("outputStream","rb");
 	// FILE *testFile = fopen("practice_project_test_file_2","rb");
 	
 	// moving the pointer to the end of the file
@@ -137,7 +137,7 @@ int main() {
 			}
 			printf("\n");
 			// writeToType1(outputStream, type, amount, count, numbers);
-			// type1ToType0(outputStream, num, numbers, count);
+			type1ToType0(outputStream, num, numbers, count);
 		}
 		else {
 			printf("Error.\n");
@@ -243,9 +243,11 @@ void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int coun
 	// writing the decimal values to the file
 	for (int i = 0; i < count; i++ ) {
 		// if char is ','
-		if (numbers[i] == ',') {
+		if ((numbers[i] == ',') || (i == count - 1)) {
 			end = i;
-			// creating a sliced array 
+			if (i == count - 1)
+				end++;
+			// creating a sliced array			
 			// contains the chars to convert to 2 byte numbers
 			uint8_t slicedNumbers[end-start];
 			for (int j = start; j < end; j++) {
@@ -255,17 +257,17 @@ void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int coun
 			x = 0;
 			// converting char to decimal value
 			uint16_t num = atoi(slicedNumbers);
-
+			/*
 			// TODO: Find better way
 			// putting num as two bytes in an array
 			uint8_t numArray[2];
-			numArray[1] = num;
+			numArray[1] = (uint8_t) num;
 			num = num >> 8;
-			numArray[0] = num;
-			
+			numArray[0] = (uint8_t) num;
+			*/
 			// finally wrting the 2 bytes into the file
-			fwrite(numArray, 1, 2, outputStream);
-			start = end;
+			fwrite(&num, 1, 2, outputStream);
+			start = end + 1;
 		}
 	} 
 }
