@@ -23,18 +23,18 @@ int main() {
 	short int port = ECHO_PORT;
 	
 	// creating listening socket
-	list_socket = socket(AF_NET, SOCK_STREAM, 0);
+	list_socket = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// checking for error
 	if (list_socket < 0) {
-		printf("ECHOSERV: Error creating a server socket.\n");
+		printf("ECHOSERV: Error creating listening socket.\n");
 		exit(EXIT_FAILURE);
 	}
 	
 	// initializing every member of socket_addr with 0
 	memset(&serv_addr, '0', sizeof(serv_addr));
 	
-	serv_addr.sin_family = AF_NET;
+	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(port);
 	// assigning a random address
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
