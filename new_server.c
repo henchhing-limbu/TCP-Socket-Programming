@@ -121,9 +121,14 @@ int main(int argc, char *argv[]) {
 		// TODO: change needed here
 		// FILE* sourcefile = fopen("practice_project_test_file_1","rb");
 		destfile = fopen("outputFile","wb");
-		convertFile(format, file, destfile);
+		// translating the file
+		// checking for error as well
+		// Readline(conn_s, &errorMessage, sizeof(int));
+		int errorMessage = convertFile(format, file, destfile);
+		// sending errormessage to the client
+		Writeline(conn_s, &errorMessage, sizeof(int));
 		
-		Writeline(conn_s, buffer, filesize);
+		// Writeline(conn_s, buffer, filesize);
 		printf("Sent response to client.\n");
 
 
@@ -263,7 +268,7 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 		}
 		else {
 			printf("Error with the format of the file.\n");
-			return 0;
+			return -1;
 		}
 		temp = ftell(sourcefile);
 	}

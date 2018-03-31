@@ -99,16 +99,19 @@ int main(int argc, char *argv[]) {
 	// receive file size from the server
 	Readline(conn_s, &received_filesize, sizeof(long));
 	
-	// Send string to echo server, and retrieve response
+	// Send data to echo server, and retrieve response
 	printf("Sending the buffer to the server.\n");
     Writeline(conn_s, buffer, filesize);
 	printf("Finished sending buffer to the server.\n");
-    Readline(conn_s, buffer, filesize);
-	printf("Finished reading response from the server.\n");
-
-
+    // Readline(conn_s, buffer, filesize);
+	// printf("Finished reading response from the server.\n");
+	
+	// Getting the error message from the server
+	int errorMessage = -1;
+	Readline(conn_s, &errorMessage, sizeof(int));
+	printf("Error message: %d\n", errorMessage);
     //  Output echoed string
-    printf("Echo response: %s\n", buffer);
+    // printf("Echo response: %s\n", buffer);
 
     return EXIT_SUCCESS;
 }
