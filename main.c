@@ -11,7 +11,7 @@ void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, 
 void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount);
 void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
 
-int main() {
+int convertFile(int format, char* filename) {
 	FILE *testFile = fopen("practice_project_test_file_1","rb");
 	// FILE *testFile = fopen("outputStream","rb");
 	// FILE *testFile = fopen("practice_project_test_file_2","rb");
@@ -152,14 +152,6 @@ int main() {
 // helper function to conver ascii to decimal numbers
 uint8_t asciiToDecimal(uint8_t amount[]) {
 	uint8_t temp = atoi(amount);;
-	/*
-	for (int i =0; i < 2; i++) {
-		temp += amount[i] - '0';
-		// printf(" Temp value: %d ", temp); 
-		temp = temp << 1;
-	}
-	temp += amount[2] - '0';
-	*/
 	return temp;
 }
 

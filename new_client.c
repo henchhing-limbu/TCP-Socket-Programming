@@ -91,26 +91,23 @@ int main(int argc, char *argv[]) {
 	
 	// read data file to buffer
 	fread(buffer,1,filesize, file_to_send);
-	
-	// add null char to the end
-	char null_char = 0;
-	memcpy(buffer + filesize, &null_char, 1);
-		
+	printf("Filesize in client: %lu\n", filesize);
+	printf("Sending file size to the server.\n");
 	// Send file size to server
 	Writeline(conn_s, &filesize, sizeof(long));
-	
+	printf("Receiving file size from the server.\n");
 	// receive file size from the server
 	Readline(conn_s, &received_filesize, sizeof(long));
-	/*  Send string to echo server, and retrieve response  */
+	
+	// Send string to echo server, and retrieve response
 	printf("Sending the buffer to the server.\n");
-    Writeline(conn_s, buffer, strlen(buffer) + 1);
+    Writeline(conn_s, buffer, filesize);
 	printf("Finished sending buffer to the server.\n");
-    Readline(conn_s, buffer, MAX_LINE-1);
+    Readline(conn_s, buffer, filesize);
 	printf("Finished reading response from the server.\n");
 
 
-    /*  Output echoed string  */
-
+    //  Output echoed string
     printf("Echo response: %s\n", buffer);
 
     return EXIT_SUCCESS;
