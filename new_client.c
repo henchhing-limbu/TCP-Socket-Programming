@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     }
 	
 	// TODO: need change here 
-	file_to_send = fopen("textfile.txt","rb");
+	file_to_send = fopen("inputFile","rb");
 	if (file_to_send == NULL) {
 		printf("Failed to open the file.\n");
 	}

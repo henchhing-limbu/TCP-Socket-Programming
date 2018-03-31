@@ -36,33 +36,33 @@ int main(int argc, char *argv[]) {
 	FILE* file;
 	// TODO: need these inputs from client
 	// TODO: hard-coded it for now
-	FILE* destinationFile;
-	int format;
+	FILE* destfile;
+	int format = 1;
 	
     //  Get port number from the command line, and
     //  set to default port if no arguments were supplied 
 
     if ( argc == 2 ) {
-	port = strtol(argv[1], &endptr, 0);
-	if ( *endptr ) {
-	    fprintf(stderr, "ECHOSERV: Invalid port number.\n");
-	    exit(EXIT_FAILURE);
-	}
+		port = strtol(argv[1], &endptr, 0);
+		if ( *endptr ) {
+			fprintf(stderr, "ECHOSERV: Invalid port number.\n");
+			exit(EXIT_FAILURE);
+		}
     }
     else if ( argc < 2 ) {
-	port = ECHO_PORT;
+		port = ECHO_PORT;
     }
     else {
-	fprintf(stderr, "ECHOSERV: Invalid arguments.\n");
-	exit(EXIT_FAILURE);
+		fprintf(stderr, "ECHOSERV: Invalid arguments.\n");
+		exit(EXIT_FAILURE);
     }
 
 	
     /*  Create the listening socket  */
 
     if ( (list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-	fprintf(stderr, "ECHOSERV: Error creating listening socket.\n");
-	exit(EXIT_FAILURE);
+		fprintf(stderr, "ECHOSERV: Error creating listening socket.\n");
+		exit(EXIT_FAILURE);
     }
 
 
@@ -113,12 +113,15 @@ int main(int argc, char *argv[]) {
 		printf("Buffer: %s\n", buffer);
 		
 		// writing to a file
-		file = fopen("receivedFile","wb");
+		file = fopen("receivedFile","wb+");
 		printf("Writing the data from buffer to the file.\n");
 		fwrite(buffer, 1, filesize, file); 
 		
 		// translating the file and saving the file to the destination file
-		
+		// TODO: change needed here
+		// FILE* sourcefile = fopen("practice_project_test_file_1","rb");
+		destfile = fopen("outputFile","wb");
+		convertFile(format, file, destfile);
 		
 		Writeline(conn_s, buffer, filesize);
 		printf("Sent response to client.\n");
@@ -133,15 +136,15 @@ int main(int argc, char *argv[]) {
     }
 }
 
-int convertFile(int format, FILE* sourcefile, FILE* destfile) {
+int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 	// moving the pointer to the end of the file
-	fseek(testFile, 0, SEEK_END);
+	fseek(sourcefile, 0, SEEK_END);
 	// gives the offset
-	long fileSize = ftell(testFile);
+	long fileSize = ftell(sourcefile);
 	// moving the pointer back to the start of the file
-	fseek(testFile, 0, SEEK_SET);
+	fseek(sourcefile, 0, SEEK_SET);
 	// gives the offset which must be 0
-	long temp = ftell(testFile);
+	long temp = ftell(sourcefile);
 	
 	// printing filesize and temp
 	printf("Filesize: %lu\n", fileSize);
@@ -150,13 +153,13 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 	// loop until the end of the file
 	while (temp < fileSize) {
 		// firstByte either 0 or 1
-		uint8_t type = fgetc(testFile);
+		uint8_t type = fgetc(sourcefile);
 		printf("Type %d", type);
 		printf("\t");
 		
 		// Type 0
 		if (type == 0) {
-			uint8_t amount = fgetc(testFile);
+			uint8_t amount = fgetc(sourcefile);
 			uint8_t amountArray[3];
 			// calls the function to convert the decimal amount 
 			// to ASCII characters stored in an array
@@ -171,7 +174,7 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 			// array to store the numbers
 			uint16_t numbers[amount];
 			// reading the file and storing the numbers in the array
-			fread(numbers, 2, amount, testFile);
+			fread(numbers, 2, amount, sourcefile);
 			// changing the Endianess
 			uint16_t x, y;
 			
@@ -198,7 +201,7 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 		else if (type == 1) {
 			uint8_t amount[3];
 			// getting the value of amount
-			fread(amount, 1, 3, testFile);
+			fread(amount, 1, 3, sourcefile);
 			uint8_t amountInDecimal = asciiToDecimal(amount);
 			uint8_t num = amountInDecimal;
 			
@@ -212,11 +215,11 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 			// to calculate the offset for fseek
 			int count = 0;
 			uint8_t charValue;
-			long currOffset = ftell(testFile);
+			long currOffset = ftell(sourcefile);
 			
 			// break until the end of unit is not reached
 			while (1) {
-				charValue = fgetc(testFile);
+				charValue = fgetc(sourcefile);
 				// if amountInDecimal is below 2
 				if (amountInDecimal < 2) {
 					if (charValue == 0 || charValue == 1) {
@@ -225,7 +228,7 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 				}
 				// if it reaches the end of the file
 				// increments count and breaks
-				if (ftell(testFile) == fileSize) {
+				if (ftell(sourcefile) == fileSize) {
 						count++;
 						break;
 				}
@@ -240,9 +243,9 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 			// array to store the numbers
 			uint8_t numbers[count];
 			// changing the position of the pointer
-			fseek(testFile, currOffset, SEEK_SET);
+			fseek(sourcefile, currOffset, SEEK_SET);
 			// stores the numbers in the array
-			fread(numbers, 1, count, testFile);
+			fread(numbers, 1, count, sourcefile);
 			
 			// prints the numbers
 			for (int i = 0; i < count; i++) {
@@ -262,9 +265,9 @@ int convertFile(int format, FILE* sourcefile, FILE* destfile) {
 			printf("Error with the format of the file.\n");
 			return 0;
 		}
-		temp = ftell(testFile);
+		temp = ftell(sourcefile);
 	}
-	fclose(testFile);
+	fclose(sourcefile);
 	fclose(outputStream);
 	return 0;
 }
