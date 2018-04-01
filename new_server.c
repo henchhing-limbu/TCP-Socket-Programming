@@ -22,7 +22,6 @@ void writeToType0(FILE* outputStream, uint8_t type, uint8_t amount, uint16_t arr
 void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, uint8_t* numbers);
 void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount);
 void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
-
 int convertFile(int format, FILE* sourcefile, FILE* destfile);
 
 int main(int argc, char *argv[]) {
@@ -38,6 +37,7 @@ int main(int argc, char *argv[]) {
 	// TODO: hard-coded it for now
 	FILE* destfile;
 	int format = 1;
+	int filenamesize;
 	
     //  Get port number from the command line, and
     //  set to default port if no arguments were supplied 
@@ -107,7 +107,6 @@ int main(int argc, char *argv[]) {
 		printf("Send the file size to the client.\n");
 		
 		// Retrieve an input line from the connected socket
-	    // then simply write it back to the same socket.
 		Readline(conn_s, buffer, filesize);
 		printf("Received file from client.\n");
 		printf("Buffer: %s\n", buffer);
@@ -117,14 +116,26 @@ int main(int argc, char *argv[]) {
 		printf("Writing the data from buffer to the file.\n");
 		fwrite(buffer, 1, filesize, file); 
 		
+		// TODO: should receive the format here
+		Readline(conn_s, &format, sizeof(int));
+		
+		// Receiving the filename size and file name
+		Readline(conn_s, &filenamesize, sizeof(int));
+		printf("Filenamesize in server: %d\n", filenamesize);
+		
+		// Receiving the file name
+		char filename[filenamesize];
+		Readline(conn_s, filename, filenamesize);
+		printf("Received the file name.\n");
+		
 		// translating the file and saving the file to the destination file
 		// TODO: change needed here
-		// FILE* sourcefile = fopen("practice_project_test_file_1","rb");
-		destfile = fopen("outputFile","wb");
-		// translating the file
+		destfile = fopen(filename,"wb");
+
 		// checking for error as well
 		// Readline(conn_s, &errorMessage, sizeof(int));
 		int errorMessage = convertFile(format, file, destfile);
+		
 		// sending errormessage to the client
 		Writeline(conn_s, &errorMessage, sizeof(int));
 		

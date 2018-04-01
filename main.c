@@ -11,7 +11,7 @@ void writeToType1(FILE* outputStream, uint8_t type, uint8_t* amount, int count, 
 void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, int amount);
 void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
 
-int convertFile(int format, char* filename) {
+int main() {
 	FILE *testFile = fopen("practice_project_test_file_1","rb");
 	// FILE *testFile = fopen("outputStream","rb");
 	// FILE *testFile = fopen("practice_project_test_file_2","rb");
