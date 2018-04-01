@@ -13,32 +13,57 @@
 #define MAX_LINE           (1000)
 
 //  Function declarations
-int ParseCmdLine(int argc, char *argv[]);
+// int ParseCmdLine(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
 
-    int       	  conn_s;                /*  connection socket         */
-    short int 	  port;                  /*  port number               */
-    struct    	  sockaddr_in servaddr;  /*  socket address structure  */
-    char          buffer[MAX_LINE];      /*  character buffer          */
-    char*         ip_address;             /*  Holds remote IP address   */
-    char*         remote_port;                /*  Holds remote port         */
-    char*     	  endptr;                /*  for strtol()              */
-	unsigned long filesize;			 // size of the file
+    int       	  conn_s;                 //  connection socket         
+    short int 	  port;                   //  port number               
+    struct    	  sockaddr_in servaddr;   //  socket address structure  
+    char          buffer[MAX_LINE];       // character buffer          
+    char*         ip_address;             //  Holds remote IP address   
+    char*         remote_port;            //  Holds remote port         
+    char*     	  endptr;                 //  for strtol()              
+	unsigned long filesize;			 	  // size of the file
 	unsigned long received_filesize;
 	FILE* 		  file_to_send;
+	int 		  format;
 
+	/*
     //  Get command line arguments 
     ParseCmdLine(argc, argv, &ip_address, &remote_port);
-
+	
     //  Set the remote port
     port = strtol(remote_port, &endptr, 0);
     if ( *endptr ) {
 		printf("ECHOCLNT: Invalid port supplied.\n");
 		exit(EXIT_FAILURE);
     }
-	
+	*/
+	if (argc > 6) {
+		printf("More than necessary arguments.\n");
+		exit(EXIT_SUCCESS);
+	}
+	else if (argc < 6) {
+		printf("Not enough arguments.\n");
+		exit(EXIT_SUCCESS);
+	}
 
+	ip_address = argv[1];
+	port = atoi(argv[2]);
+	int filePathsize = strlen(argv[3]);
+	char filePath[filePathsize];
+	memcpy(filePath, argv[3], filePathsize);
+	format = atoi(argv[4]);
+	if (format < 0 || format > 3) {
+		printf("Incorrect format number.\n");
+		exit(EXIT_SUCCESS);
+	}
+	int filenamesize = strlen(argv[5]);
+	char outputfile[filenamesize];
+	memcpy(outputfile, argv[5], filenamesize);
+
+	
     //  Create the listening socket
     if ( (conn_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "ECHOCLNT: Error creating listening socket.\n");
@@ -68,7 +93,6 @@ int main(int argc, char *argv[]) {
 	
 	// TODO: temporary fix
 	// TODO: need to get arguments from the cmd 
-	int format;
 	
 	
 	// TODO: need change here 
@@ -110,9 +134,6 @@ int main(int argc, char *argv[]) {
 	printf("Sending format number to the server.\n");
 	
 	// sending the output file name to the server
-	char* outputfile = "outputFile";
-	int filenamesize = strlen(outputfile);
-	printf("Filenamesize: %d\n", filenamesize);
 	// sending the filenamesize to the server
 	Writeline(conn_s, &filenamesize, sizeof(int));
 
@@ -127,9 +148,14 @@ int main(int argc, char *argv[]) {
 		printf("Format error\n");
 	else
 		printf("Success\n");
+	if (close(conn_s) < 0) {
+		printf("Error closing the connection.\n");
+		exit(EXIT_FAILURE);
+	}
+	
     return EXIT_SUCCESS;
 }
-
+/*
 int ParseCmdLine(int argc, char *argv[], char **ip_address, char **remote_port) {
     int n = 1;
     while ( n < argc ) {
@@ -149,4 +175,5 @@ int ParseCmdLine(int argc, char *argv[], char **ip_address, char **remote_port) 
 
     return 0;
 }
+*/
 

@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 	// TODO: need these inputs from client
 	// TODO: hard-coded it for now
 	FILE* destfile;
-	int format = 1;
+	int format ;
 	int filenamesize;
 	
     //  Get port number from the command line, and
@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
         to client requests and echo input  */
 
     while ( 1 ) {
+		memset(buffer, 0, MAX_LINE);
 		/*  Wait for a connection, then accept() it  */
 		if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
 			fprintf(stderr, "ECHOSERV: Error calling accept()\n");
@@ -112,12 +113,14 @@ int main(int argc, char *argv[]) {
 		printf("Buffer: %s\n", buffer);
 		
 		// writing to a file
-		file = fopen("receivedFile","wb+");
+		file = fopen("receivedFile","wb");
 		printf("Writing the data from buffer to the file.\n");
 		fwrite(buffer, 1, filesize, file); 
+		fclose(file);
 		
 		// TODO: should receive the format here
 		Readline(conn_s, &format, sizeof(int));
+		printf("Received format: %d\n", format);
 		
 		// Receiving the filename size and file name
 		Readline(conn_s, &filenamesize, sizeof(int));
@@ -131,10 +134,15 @@ int main(int argc, char *argv[]) {
 		// translating the file and saving the file to the destination file
 		// TODO: change needed here
 		destfile = fopen(filename,"wb");
-
+		file = fopen("receivedFile","rb");
+		
 		// checking for error as well
 		// Readline(conn_s, &errorMessage, sizeof(int));
 		int errorMessage = convertFile(format, file, destfile);
+		fclose(destfile);
+		fclose(file);
+		
+		remove("receivedFile");
 		
 		// sending errormessage to the client
 		Writeline(conn_s, &errorMessage, sizeof(int));
@@ -180,6 +188,7 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 			// calls the function to convert the decimal amount 
 			// to ASCII characters stored in an array
 			decimalToAscii(amount, amountArray);
+			
 			// printing the amount
 			printf("Amount: ");
 			for (int i = 0; i < 3; i++) {
@@ -196,23 +205,25 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 			
 			// print the numbers
 			for (int i = 0; i < amount; i++) {
+				// sll by 8
 				x = numbers[i] << 8;
-				y = numbers[i] >> 8; 
+				// srl by 8
+				y = numbers[i] >> 8;
+				// 
 				uint16_t z = x | y;
 				printf("%d", z);
+			
+				// printf("%d", numbers[i]);
 				if(i != amount-1)
 					printf(",");
 			}
 			printf("\n");
-			
-			// checking conditions for different translations
-			if (format == 0 || format == 2) {
+			if (format == 0 || format == 2) 
 				writeToType0(outputStream, type, amount, numbers);
-			}
-			else if (format == 1 || format == 3) {
+			else if (format == 1 || format == 3) 
 				type0ToType1(amountArray, numbers, outputStream, amount);
-			}
 		}
+		
 		// Type 1
 		else if (type == 1) {
 			uint8_t amount[3];
@@ -268,23 +279,17 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 				printf("%c", numbers[i]);
 			}
 			printf("\n");
-			
-			// checking conditions for different translations
-			if (format == 0 || format == 1) {
+			if (format == 0 || format == 1)
 				writeToType1(outputStream, type, amount, count, numbers);
-			}
-			if (format == 2 || format == 3) {
+			else if (format == 2 || format == 3)
 				type1ToType0(outputStream, num, numbers, count);
-			}
 		}
 		else {
-			printf("Error with the format of the file.\n");
-			return -1;
+			printf("Error.\n");
+			return 0;
 		}
 		temp = ftell(sourcefile);
 	}
-	fclose(sourcefile);
-	fclose(outputStream);
 	return 0;
 }
 

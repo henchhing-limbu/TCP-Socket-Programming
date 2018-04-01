@@ -12,8 +12,8 @@ void type0ToType1(uint8_t* amountArray, uint16_t* numbers, FILE* outputStream, i
 void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int count);
 
 int main() {
-	FILE *testFile = fopen("practice_project_test_file_1","rb");
-	// FILE *testFile = fopen("outputStream","rb");
+	// FILE *testFile = fopen("practice_project_test_file_1","rb");
+	FILE *testFile = fopen("out","rb");
 	// FILE *testFile = fopen("practice_project_test_file_2","rb");
 	
 	// moving the pointer to the end of the file
@@ -30,7 +30,7 @@ int main() {
 	printf("Temp: %lu\n", temp);
 	
 	// output file
-	FILE* outputStream = fopen("outputStream","wb");
+	// FILE* outputStream = fopen("output","wb");
 	
 	// loop until the end of the file
 	while (temp < fileSize) {
@@ -78,7 +78,7 @@ int main() {
 			printf("\n");
 
 			// writeToType0(outputStream, type, amount, numbers);
-			// type0ToType1(amountArray, numbers, outputStream, amount);
+			//type0ToType1(amountArray, numbers, outputStream, amount);
 		}
 		
 		// Type 1
@@ -137,15 +137,16 @@ int main() {
 			}
 			printf("\n");
 			// writeToType1(outputStream, type, amount, count, numbers);
-			type1ToType0(outputStream, num, numbers, count);
+			// type1ToType0(outputStream, num, numbers, count);
 		}
 		else {
 			printf("Error.\n");
+			return 0;
 		}
 		temp = ftell(testFile);
 	}
 	fclose(testFile);
-	fclose(outputStream);
+	//fclose(outputStream);
 	return 0;
 }
 
