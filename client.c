@@ -1,75 +1,110 @@
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <sys/socket.h>       /*  socket definitions        */
+#include <sys/types.h>        /*  socket types              */
+#include <arpa/inet.h>        /*  inet (3) funtions         */
+#include <unistd.h>           /*  misc. UNIX functions      */
+#include "helper.h"           /*  Our own helper functions  */
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-
-// Global constants
-#define MAX_LINE (1025)
+#include <stdio.h>
 
 
-int main() {
-	int conn_socket;						// listening socket
-	int bind_socket;						// binding socket
-	short int port;							// port number
-	// socket address structures
-	// particular for of the sockaddr used for TCP/IP addresses
-	struct sockaddr_in servaddr;
-	char buffer[MAX_LINE];					// character buffer
-	int filesize;							// size of the file to send to server
-	FILE* file_to_send;						// file to send
-	char* ip_address;						// holds remote IP address
-	char* port_num;							// holds remote port number
-	char* endptr;							// for strtol()
+//  Global constant
+#define MAX_LINE           (1000)
 
-	// setting the remote port
-	port = strtol(port_num, &endptr, 0);
-	if (*endptr) {
-		printf("ECHOCLIENT: Invalid port supplied.\n");
+//  Function declarations
+// int ParseCmdLine(int argc, char *argv[]);
+
+int main(int argc, char *argv[]) {
+
+    int       	  conn_s;                 //  connection socket         
+    short int 	  port;                   //  port number               
+    struct    	  sockaddr_in servaddr;   //  socket address structure  
+    char          buffer[MAX_LINE];       // character buffer          
+    char*         ip_address;             //  Holds remote IP address   
+    char*         remote_port;            //  Holds remote port         
+    char*     	  endptr;                 //  for strtol()              
+	unsigned long filesize;			 	  // size of the file
+	unsigned long received_filesize;
+	FILE* 		  file_to_send;
+	int 		  format;
+
+	/*
+    //  Get command line arguments 
+    ParseCmdLine(argc, argv, &ip_address, &remote_port);
+	
+    //  Set the remote port
+    port = strtol(remote_port, &endptr, 0);
+    if ( *endptr ) {
+		printf("ECHOCLNT: Invalid port supplied.\n");
 		exit(EXIT_FAILURE);
+    }
+	*/
+	if (argc > 6) {
+		printf("More than necessary arguments.\n");
+		exit(EXIT_SUCCESS);
 	}
-	
-	// creating the listening socket
-	conn_socket = socket(AF_INET, SOCK_STREAM, 0);
-	
-	// checking for the error
-	if (conn_socket < 0) {
-		printf("ECHOCLIENT: Error creating listening socket.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// set all the bytes is socket structure to 0
-	memset(&servaddr, '0', sizeof(servaddr));
-	
-	// filling in the relative data members 
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(port);
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	
-	// setting the remote IP address
-	if ( inet_aton(ip_address, &servaddr.sin_addr ) < 0 ) {
-		printf("ECHOCLIENT: Invalid remote IP address.\n");
-		exit(EXIT_FAILURE);
+	else if (argc < 6) {
+		printf("Not enough arguments.\n");
+		exit(EXIT_SUCCESS);
 	}
 
-	// bind our socket address to the listening socket, and call listen()
-	bind_socket = bind(conn_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
-	
-	printf("TCP Client establishing connection...");
-	
-	// establishing connection to the server 
-	// checking for error
-	if (connect(conn_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-		printf("ECHOSERV: Error establishing connection.\n");
-		exit(EXIT_FAILURE);
+	ip_address = argv[1];
+	port = atoi(argv[2]);
+	int filePathsize = strlen(argv[3]);
+	char filePath[filePathsize];
+	memcpy(filePath, argv[3], filePathsize);
+	printf("filename: %s\n", filePath);
+	format = atoi(argv[4]);
+	if (format < 0 || format > 3) {
+		printf("Incorrect format number.\n");
+		exit(EXIT_SUCCESS);
 	}
+	int filenamesize = strlen(argv[5]);
+	char outputfile[filenamesize];
+	memcpy(outputfile, argv[5], filenamesize);
+
+	
+    //  Create the listening socket
+    if ( (conn_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+		fprintf(stderr, "ECHOCLNT: Error creating listening socket.\n");
+		exit(EXIT_FAILURE);
+    }
+
+
+    //  Set all bytes in socket address structure to
+    //  zero, and fill in the relevant data members
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family      = AF_INET;
+    servaddr.sin_port        = htons(port);
+
+
+    // Set the remote IP address 
+    if ( inet_aton(ip_address, &servaddr.sin_addr) <= 0 ) {
+		printf("ECHOCLNT: Invalid remote IP address.\n");
+		exit(EXIT_FAILURE);
+    }
+
+    
+    //  connect() to the remote echo server
+    if ( connect(conn_s, (struct sockaddr *) &servaddr, sizeof(servaddr) ) < 0 ) {
+		printf("ECHOCLNT: Error calling connect()\n");
+		exit(EXIT_FAILURE);
+    }
+	
+	// TODO: temporary fix
+	// TODO: need to get arguments from the cmd 
+	
 	
 	// TODO: need change here 
-	file_to_send = fopen("practic_project_test_file_1","rb");
+	// TODO: stop hard-coding here
+	file_to_send = fopen(filePath,"rb");
+	if (file_to_send == NULL) {
+		printf("Failed to open the file.\n");
+	}
 	// moving the pointer to the end of the file
 	fseek(file_to_send, 0, SEEK_END);
+	
 	// finding the size of the file
 	// ftell returns current value of the position indicator of the stream
 	filesize = ftell(file_to_send);
@@ -78,17 +113,48 @@ int main() {
 	
 	// read data file to buffer
 	fread(buffer,1,filesize, file_to_send);
+	printf("Filesize in client: %lu\n", filesize);
 	
-	// writing the data of the file to the socket
-	// if error in writing show error message
-	if (write(conn_socket, buffer, filesize) < 0) {
-		printf("ECHOCLIENT: Error writing to the socket.\n");
+	// Send file size to server
+	printf("Sending file size to the server.\n");
+	Writeline(conn_s, &filesize, sizeof(long));
+	
+	// receive file size from the server
+	printf("Receiving file size from the server.\n");
+	Readline(conn_s, &received_filesize, sizeof(long));
+	
+	// Send data to echo server, and retrieve response
+	printf("Sending the buffer to the server.\n");
+    Writeline(conn_s, buffer, filesize);
+	printf("Finished sending buffer to the server.\n");
+    // Readline(conn_s, buffer, filesize);
+	// printf("Finished reading response from the server.\n");
+	
+	// sending the format to the server
+	Writeline(conn_s, &format, sizeof(int));
+	printf("Sending format number to the server.\n");
+	
+	// sending the output file name to the server
+	// sending the filenamesize to the server
+	Writeline(conn_s, &filenamesize, sizeof(int));
+
+	// sending the filename to the server
+	Writeline(conn_s, outputfile, filenamesize);
+	printf("Send filename to the server.\n");
+	
+	// Getting the error message from the server
+	int errorMessage = -1;
+	Readline(conn_s, &errorMessage, sizeof(int));
+	if (errorMessage < 0)
+		printf("Format error\n");
+	else
+		printf("Success\n");
+	if (close(conn_s) < 0) {
+		printf("Error closing the connection.\n");
+		exit(EXIT_FAILURE);
 	}
-	// if error in reading show error message
-	if (read(conn_socket, buffer, filesize) < 0) 
-		printf("ECHOCLIENT: Error reading from the socket.\n");
 	
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
-// get 
+
