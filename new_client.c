@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
 	int filePathsize = strlen(argv[3]);
 	char filePath[filePathsize];
 	memcpy(filePath, argv[3], filePathsize);
+	printf("filename: %s\n", filePath);
 	format = atoi(argv[4]);
 	if (format < 0 || format > 3) {
 		printf("Incorrect format number.\n");
@@ -97,7 +98,7 @@ int main(int argc, char *argv[]) {
 	
 	// TODO: need change here 
 	// TODO: stop hard-coding here
-	file_to_send = fopen("practice_project_test_file_1","rb");
+	file_to_send = fopen(filePath,"rb");
 	if (file_to_send == NULL) {
 		printf("Failed to open the file.\n");
 	}
@@ -155,25 +156,5 @@ int main(int argc, char *argv[]) {
 	
     return EXIT_SUCCESS;
 }
-/*
-int ParseCmdLine(int argc, char *argv[], char **ip_address, char **remote_port) {
-    int n = 1;
-    while ( n < argc ) {
-	if ( !strncmp(argv[n], "-a", 2) || !strncmp(argv[n], "-A", 2) ) {
-	    *ip_address = argv[++n];
-	}
-	else if ( !strncmp(argv[n], "-p", 2) || !strncmp(argv[n], "-P", 2) ) {
-	    *remote_port = argv[++n];
-	}
-	else if ( !strncmp(argv[n], "-h", 2) || !strncmp(argv[n], "-H", 2) ) {
-	    printf("Usage:\n\n");
-	    printf("    timeclnt -a (remote IP) -p (remote port)\n\n");
-	    exit(EXIT_SUCCESS);
-	}
-	++n;
-    }
 
-    return 0;
-}
-*/
 

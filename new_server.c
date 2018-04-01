@@ -32,16 +32,12 @@ int main(int argc, char *argv[]) {
     char      buffer[MAX_LINE];      /*  character buffer          */
     char     *endptr;                /*  for strtol()              */
 	unsigned long filesize = 0;
-	FILE* file;
-	// TODO: need these inputs from client
-	// TODO: hard-coded it for now
-	FILE* destfile;
 	int format ;
 	int filenamesize;
 	
     //  Get port number from the command line, and
     //  set to default port if no arguments were supplied 
-
+	/*
     if ( argc == 2 ) {
 		port = strtol(argv[1], &endptr, 0);
 		if ( *endptr ) {
@@ -56,6 +52,14 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "ECHOSERV: Invalid arguments.\n");
 		exit(EXIT_FAILURE);
     }
+	*/
+	if (argc == 2) {
+		port = atoi(argv[1]);
+	}
+	else {
+		printf("Invalid arguments.\n");
+		exit(EXIT_SUCCESS);
+	}
 
 	
     /*  Create the listening socket  */
@@ -93,8 +97,9 @@ int main(int argc, char *argv[]) {
         to client requests and echo input  */
 
     while ( 1 ) {
+		
 		memset(buffer, 0, MAX_LINE);
-		/*  Wait for a connection, then accept() it  */
+		// Wait for a connection, then accept() it 
 		if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
 			fprintf(stderr, "ECHOSERV: Error calling accept()\n");
 			exit(EXIT_FAILURE);
@@ -113,7 +118,7 @@ int main(int argc, char *argv[]) {
 		printf("Buffer: %s\n", buffer);
 		
 		// writing to a file
-		file = fopen("receivedFile","wb");
+		FILE* file = fopen("receivedFile","wb");
 		printf("Writing the data from buffer to the file.\n");
 		fwrite(buffer, 1, filesize, file); 
 		fclose(file);
@@ -122,18 +127,18 @@ int main(int argc, char *argv[]) {
 		Readline(conn_s, &format, sizeof(int));
 		printf("Received format: %d\n", format);
 		
-		// Receiving the filename size and file name
+		// Receiving the destination filename size and file name
 		Readline(conn_s, &filenamesize, sizeof(int));
 		printf("Filenamesize in server: %d\n", filenamesize);
 		
 		// Receiving the file name
 		char filename[filenamesize];
 		Readline(conn_s, filename, filenamesize);
-		printf("Received the file name.\n");
+		printf("Received the file name: %s\n", filename);
 		
 		// translating the file and saving the file to the destination file
 		// TODO: change needed here
-		destfile = fopen(filename,"wb");
+		FILE* destfile = fopen(filename,"wb");
 		file = fopen("receivedFile","rb");
 		
 		// checking for error as well
@@ -161,6 +166,7 @@ int main(int argc, char *argv[]) {
 }
 
 int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
+	
 	// moving the pointer to the end of the file
 	fseek(sourcefile, 0, SEEK_END);
 	// gives the offset
