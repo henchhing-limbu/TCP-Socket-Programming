@@ -11,8 +11,6 @@
 
 
 /*  Global constants  */
-
-#define ECHO_PORT          (2002)
 #define MAX_LINE           (1000)
 
 // function declarations
@@ -25,34 +23,16 @@ void type1ToType0(FILE* outputStream, uint8_t amount, uint8_t* numbers, int coun
 int convertFile(int format, FILE* sourcefile, FILE* destfile);
 
 int main(int argc, char *argv[]) {
-    int       list_s;                /*  listening socket          */
-    int       conn_s;                /*  connection socket         */
-    short int port;                  /*  port number               */
-    struct    sockaddr_in servaddr;  /*  socket address structure  */
-    char      buffer[MAX_LINE];      /*  character buffer          */
-    char     *endptr;                /*  for strtol()              */
+    int       list_s;                //  listening socket          
+    int       conn_s;                //  connection socket         
+    short int port;                  //  port number               
+    struct    sockaddr_in servaddr;  //  socket address structure  
+    char      buffer[MAX_LINE];      //  character buffer          
+    char     *endptr;                //  for strtol()              
 	unsigned long filesize = 0;
 	int format ;
 	int filenamesize;
 	
-    //  Get port number from the command line, and
-    //  set to default port if no arguments were supplied 
-	/*
-    if ( argc == 2 ) {
-		port = strtol(argv[1], &endptr, 0);
-		if ( *endptr ) {
-			fprintf(stderr, "ECHOSERV: Invalid port number.\n");
-			exit(EXIT_FAILURE);
-		}
-    }
-    else if ( argc < 2 ) {
-		port = ECHO_PORT;
-    }
-    else {
-		fprintf(stderr, "ECHOSERV: Invalid arguments.\n");
-		exit(EXIT_FAILURE);
-    }
-	*/
 	if (argc == 2) {
 		port = atoi(argv[1]);
 	}
@@ -62,79 +42,84 @@ int main(int argc, char *argv[]) {
 	}
 
 	
-    /*  Create the listening socket  */
-
+    //  Create the listening socket
     if ( (list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-		fprintf(stderr, "ECHOSERV: Error creating listening socket.\n");
+		fprintf(stderr, "SERV: Error creating listening socket.\n");
 		exit(EXIT_FAILURE);
     }
 
 
-    /*  Set all bytes in socket address structure to
-        zero, and fill in the relevant data members   */
-
+    // Set all bytes in socket address structure to
+    // zero, and fill in the relevant data members  
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port        = htons(port);
 
 
-    /*  Bind our socket addresss to the 
-	listening socket, and call listen()  */
-
+    // Bind our socket addresss to the 
+	// listening socket, and call listen()
     if ( bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0 ) {
-		fprintf(stderr, "ECHOSERV: Error calling bind()\n");
+		fprintf(stderr, "SERV: Error calling bind()\n");
 		exit(EXIT_FAILURE);
     }
 
     if ( listen(list_s, LISTENQ) < 0 ) {
-		fprintf(stderr, "ECHOSERV: Error calling listen()\n");
+		fprintf(stderr, "SERV: Error calling listen()\n");
 		exit(EXIT_FAILURE);
     }
 
     
-    /*  Enter an infinite loop to respond
-        to client requests and echo input  */
+    //  Enter an infinite loop to respond
+    //  to client requests and echo input 
 
     while ( 1 ) {
 		
 		memset(buffer, 0, MAX_LINE);
+		
 		// Wait for a connection, then accept() it 
 		if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
-			fprintf(stderr, "ECHOSERV: Error calling accept()\n");
+			fprintf(stderr, "SERV: Error calling accept()\n");
 			exit(EXIT_FAILURE);
 		}
 		
 		// file size reading and writing
 		Readline(conn_s, &filesize, sizeof(long));
 		printf("Received file size from the client.\n");
-		printf("Filesize: %lu\n", filesize);
+		// printf("Filesize: %lu\n", filesize);
 		Writeline(conn_s, &filesize, sizeof(long));
-		printf("Send the file size to the client.\n");
-		
-		// Retrieve an input line from the connected socket
-		Readline(conn_s, buffer, filesize);
-		printf("Received file from client.\n");
-		printf("Buffer: %s\n", buffer);
+		// printf("Send the file size to the client.\n");
 		
 		// writing to a file
 		FILE* file = fopen("receivedFile","wb");
-		printf("Writing the data from buffer to the file.\n");
-		fwrite(buffer, 1, filesize, file); 
+		
+		// Retrieve file from client
+		unsigned long bytesToReceive = filesize;
+		unsigned long bytesReceived;
+		while (bytesToReceive > 0) 	{
+			if (bytesToReceive > MAX_LINE)
+				bytesReceived = Readline(conn_s, buffer, MAX_LINE);
+			else
+				bytesReceived = Readline(conn_s, buffer, bytesToReceive);
+			fwrite(buffer, 1, bytesReceived, file);
+			bytesToReceive -= bytesReceived;
+		}
+		printf("Received file.\n");
+	
 		fclose(file);
 		
 		// TODO: should receive the format here
 		Readline(conn_s, &format, sizeof(int));
-		printf("Received format: %d\n", format);
+		printf("Received format.\n");
 		
 		// Receiving the destination filename size and file name
 		Readline(conn_s, &filenamesize, sizeof(int));
-		printf("Filenamesize in server: %d\n", filenamesize);
+		printf("Received Filenamesize.\n");
 		
 		// Receiving the file name
 		char filename[filenamesize];
 		Readline(conn_s, filename, filenamesize);
-		printf("Received the file name: %s\n", filename);
+		printf("Received the file name.\n");
 		
 		// translating the file and saving the file to the destination file
 		// TODO: change needed here
@@ -144,9 +129,12 @@ int main(int argc, char *argv[]) {
 		// checking for error as well
 		// Readline(conn_s, &errorMessage, sizeof(int));
 		int errorMessage = convertFile(format, file, destfile);
+
 		fclose(destfile);
 		fclose(file);
 		
+		if (errorMessage < 0)
+			remove(filename);		
 		remove("receivedFile");
 		
 		// sending errormessage to the client
@@ -159,7 +147,7 @@ int main(int argc, char *argv[]) {
 		/*  Close the connected socket  */
 
 		if ( close(conn_s) < 0 ) {
-			fprintf(stderr, "ECHOSERV: Error calling close()\n");
+			fprintf(stderr, "SERV: Error calling close()\n");
 			exit(EXIT_FAILURE);
 		}
     }
@@ -177,8 +165,8 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 	long temp = ftell(sourcefile);
 	
 	// printing filesize and temp
-	printf("Filesize: %lu\n", fileSize);
-	printf("Temp: %lu\n", temp);
+	// printf("Filesize: %lu\n", fileSize);
+	// printf("Temp: %lu\n", temp);
 	
 	// loop until the end of the file
 	while (temp < fileSize) {
@@ -292,7 +280,7 @@ int convertFile(int format, FILE* sourcefile, FILE* outputStream) {
 		}
 		else {
 			printf("Error.\n");
-			return 0;
+			return -1;
 		}
 		temp = ftell(sourcefile);
 	}

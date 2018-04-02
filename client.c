@@ -29,17 +29,6 @@ int main(int argc, char *argv[]) {
 	FILE* 		  file_to_send;
 	int 		  format;
 
-	/*
-    //  Get command line arguments 
-    ParseCmdLine(argc, argv, &ip_address, &remote_port);
-	
-    //  Set the remote port
-    port = strtol(remote_port, &endptr, 0);
-    if ( *endptr ) {
-		printf("ECHOCLNT: Invalid port supplied.\n");
-		exit(EXIT_FAILURE);
-    }
-	*/
 	if (argc > 6) {
 		printf("More than necessary arguments.\n");
 		exit(EXIT_SUCCESS);
@@ -54,10 +43,9 @@ int main(int argc, char *argv[]) {
 	int filePathsize = strlen(argv[3]);
 	char filePath[filePathsize];
 	memcpy(filePath, argv[3], filePathsize);
-	printf("filename: %s\n", filePath);
 	format = atoi(argv[4]);
 	if (format < 0 || format > 3) {
-		printf("Incorrect format number.\n");
+		printf("Incorrect format number: Format number must be in the range 0-3.\n");
 		exit(EXIT_SUCCESS);
 	}
 	int filenamesize = strlen(argv[5]);
@@ -91,16 +79,12 @@ int main(int argc, char *argv[]) {
 		printf("ECHOCLNT: Error calling connect()\n");
 		exit(EXIT_FAILURE);
     }
+
 	
-	// TODO: temporary fix
-	// TODO: need to get arguments from the cmd 
-	
-	
-	// TODO: need change here 
-	// TODO: stop hard-coding here
 	file_to_send = fopen(filePath,"rb");
 	if (file_to_send == NULL) {
 		printf("Failed to open the file.\n");
+		exit(EXIT_FAILURE);
 	}
 	// moving the pointer to the end of the file
 	fseek(file_to_send, 0, SEEK_END);
@@ -113,7 +97,7 @@ int main(int argc, char *argv[]) {
 	
 	// read data file to buffer
 	fread(buffer,1,filesize, file_to_send);
-	printf("Filesize in client: %lu\n", filesize);
+	// printf("Filesize in client: %lu\n", filesize);
 	
 	// Send file size to server
 	printf("Sending file size to the server.\n");
@@ -124,23 +108,37 @@ int main(int argc, char *argv[]) {
 	Readline(conn_s, &received_filesize, sizeof(long));
 	
 	// Send data to echo server, and retrieve response
-	printf("Sending the buffer to the server.\n");
-    Writeline(conn_s, buffer, filesize);
-	printf("Finished sending buffer to the server.\n");
+	printf("Sending file to the server.\n");
+   
+	// Send file to the server
+	unsigned long bytesToSend = filesize;
+	unsigned long bytesSent;
+	while (bytesToSend > 0) 	{
+		if (bytesToSend > MAX_LINE) {
+			fread(buffer, 1, MAX_LINE, file_to_send);
+			bytesSent = Writeline(conn_s, buffer, MAX_LINE);
+		} else {
+			fread(buffer, 1, bytesToSend, file_to_send);
+			bytesSent = Writeline(conn_s, buffer, bytesToSend);
+		}
+		bytesToSend -= bytesSent;
+	}
+	printf("File sent.\n");
+	// printf("Finished sending data to the server.\n");
     // Readline(conn_s, buffer, filesize);
 	// printf("Finished reading response from the server.\n");
 	
 	// sending the format to the server
-	Writeline(conn_s, &format, sizeof(int));
 	printf("Sending format number to the server.\n");
+	Writeline(conn_s, &format, sizeof(int));
 	
 	// sending the output file name to the server
-	// sending the filenamesize to the server
+	printf("Sending the filenamesize to the server.\n");
 	Writeline(conn_s, &filenamesize, sizeof(int));
-
+	
 	// sending the filename to the server
-	Writeline(conn_s, outputfile, filenamesize);
 	printf("Send filename to the server.\n");
+	Writeline(conn_s, outputfile, filenamesize);
 	
 	// Getting the error message from the server
 	int errorMessage = -1;
