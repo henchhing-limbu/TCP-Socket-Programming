@@ -13,7 +13,6 @@
 #define MAX_LINE           (1000)
 
 //  Function declarations
-// int ParseCmdLine(int argc, char *argv[]);
 
 int main(int argc, char *argv[]) {
 
@@ -125,7 +124,7 @@ int main(int argc, char *argv[]) {
 	}
 	printf("File sent.\n");
 	// printf("Finished sending data to the server.\n");
-    // Readline(conn_s, buffer, filesize);
+    	// Readline(conn_s, buffer, filesize);
 	// printf("Finished reading response from the server.\n");
 	
 	// sending the format to the server
