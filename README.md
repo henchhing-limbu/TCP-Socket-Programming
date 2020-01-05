@@ -83,3 +83,70 @@ the server and server responds to it.
 | practice_project_test_file_2 | Success | Success | Normal functionality | Data from test file 2 from practice project | No Error |
 | large File | Format Error | Format Error | Sending and receiving file larger than buffer size | Data in largeFile.txt | No Error |
 | wrong type | Format Error | Format Error | Testing for the incorrect type (incorrect format) | Data in wrongType.txt | No Error |
+
+### Usage of client and server program
+#### Usage of Client
+The following command invokes the client:
+<client> <server IP> <server port> <file path> <to format> <to name>
+Where
+➢  <client> is the name of the client executable file name,
+➢  <server IP> is the IP address of the server
+➢  <server port> is the TCP of the server
+➢  <file path> is the path of the file to be sent to the server (the file path
+indicates the
+location of the file in the system on which the server runs. It includes the
+file name, and possible the hierarchy of directories.)
+➢  <to format> indicates how the server should translate the received units.
+0 means no translation, 1 means to only translate type 0 units to type 1 with
+type 1 units unchanged, and 3 means to translate type 0 to 1 and type 1 to 0.
+➢  <to name> is the name of the file the server should save the units to
+
+If there are not enough or more than enough arguments, format is not in the
+specified range (0 to 3), then the program is terminated. After creating the
+socket, setting the remote IP address, connection to the remote echo server,
+the client sends the file size to the client after calculating the file size.
+Followed by that, client sends data in the file to the server. Thereafter,
+client sends file format to the server. Client sends size of the output file
+name and also sends the output file name.
+
+Finally, the client receives the error message from the server. 0 is a
+confirmation message saying that the data was translated and saved in the
+destination file by the server. -1 means that there was an error translating the
+file. Finally, the client closes the TCP connect and returns EXIT_SUCCESS.
+
+#### Usage of Server
+The following command invokes the server:
+<server> <port>
+If enough arguments (2) are not passed, then the server program is terminated.
+After the necessary setup is made (creating listening socket, filling relevant
+data members in socket address structure, binding socket address to listening
+socket), the program enters into an infinite loop to listen to client requests.
+The client will send the units in the file from the path on the server. The
+server will check the received units. If any unit has wrong format, the server
+will simply send back an error message and close the connection. If everything
+is right, the server will translate type 0 units to type1 and type 1 units to
+type 0, then save them to the specified file in the directory which the server
+application is in and send a confirmation message and close the connection.
+
+### Instructions to compile client
+The client can be complied by the following command in the command line:
+gcc <client.c> <helper.c> <helper.h> -o <filename>
+where,
+➢  <client.c> is the client c file
+➢  <helper.c> is the file that contains the implementation of helper functions
+➢  <helper.h> is the file that contains the definitions of helper functions
+➢  <filename> is the compiled executable file name
+
+### Instructions to compile server
+The server can be compiled by the following command in the command line:
+gcc <server.c> <helper.c> <helper.h> -o <filename>
+where,
+➢  <server.c> is the server c file
+➢  <helper.c> is the file that contains the implementation of helper
+   functions
+➢  <helper.h> is the file that contains the definitions of helper functions
+➢  <filename> is the compiled executable file name
+
+### Significant References
+For the helper functions, significant references were made from the following link:
+www.paulgriffiths.net/program/c/sockets.php
