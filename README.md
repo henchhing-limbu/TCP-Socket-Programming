@@ -79,5 +79,7 @@ the server and server responds to it.
 ### Test Cases
 | Input File | Expected Output | Actual Ouput | Rationale | Content | Errors |
 | :------ | :------ | :----- | :----- | :------ | :----- |
-| practice_projcet_test_file_1 | Success | Success | Normal functionality | Data from test file 1 from practice projcet
-| No Error |
+| practice_projcet_test_file_1 | Success | Success | Normal functionality | Data from test file 1 from practice projcet | No Error |
+| practice_project_test_file_2 | Success | Success | Normal functionality | Data from test file 2 from practice project | No Error |
+| large File | Format Error | Format Error | Sending and receiving file larger than buffer size | Data in largeFile.txt | No Error |
+| wrong type | Format Error | Format Error | Testing for the incorrect type (incorrect format) | Data in wrongType.txt | No Error |
